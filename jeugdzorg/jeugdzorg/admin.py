@@ -6,6 +6,24 @@ from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import ugettext_lazy as _
 from .forms import *
 
+class CustonBulkDelete(admin.ModelAdmin):
+    actions=['really_delete_selected']
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        del actions['delete_selected']
+        return actions
+
+    def really_delete_selected(self, request, queryset):
+        for obj in queryset:
+            obj.delete()
+
+        if queryset.count() == 1:
+            message_bit = "1 entry was"
+        else:
+            message_bit = "%s entries were" % queryset.count()
+        self.message_user(request, "%s successfully deleted." % message_bit)
+    really_delete_selected.short_description = "Delete selected entries"
 
 class VoorwaardeInline(SortableStackedInline):
     model = Voorwaarde
@@ -38,7 +56,7 @@ class ProfielInline(admin.TabularInline):
 
 
 @admin.register(Regeling)
-class RegelingAdmin(SortableAdmin):
+class RegelingAdmin(CustonBulkDelete, SortableAdmin):
     list_display = ['titel', 'bron_veranderd', 'datum_gecreeerd', 'datum_opgeslagen']
     fieldsets = (
         (None, {
@@ -86,12 +104,12 @@ class PaginaAdmin(SortableAdminMixin, admin.ModelAdmin):
 
 
 @admin.register(Organisatie)
-class OrganisatieAdmin(SortableAdmin):
+class OrganisatieAdmin(CustonBulkDelete, SortableAdmin):
     pass
 
 
 @admin.register(Gebied)
-class GebiedAdmin(admin.ModelAdmin):
+class GebiedAdmin(CustonBulkDelete, admin.ModelAdmin):
     list_display = ['naam', 'stadsdeel', ]
     list_filter = ['stadsdeel', ]
     prepopulated_fields = {'slug': ('naam',), }
@@ -103,7 +121,7 @@ class StadsdeelAdmin(admin.ModelAdmin):
 
 
 @admin.register(Thema)
-class ThemaAdmin(admin.ModelAdmin):
+class ThemaAdmin(CustonBulkDelete, admin.ModelAdmin):
     list_display = ['titel', ]
 
 

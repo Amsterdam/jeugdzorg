@@ -28,7 +28,7 @@
                 <ul class="contacten cards">
                   {% for profiel in titel.list reversed %}
                       <li>
-                          {% include 'snippets/contact.html' with item=profiel %}
+                          {{ profiel.profile_rendered|safe }}
                       </li>
                   {% endfor %}
                 </ul>
@@ -43,7 +43,7 @@
                 <ul class="contacten cards">
                   {% for profiel in titel.list %}
                       <li>
-                          {% include 'snippets/contact.html' with item=profiel %}
+                          {{ profiel.profile_rendered|safe }}
 
                       </li>
                   {% endfor %}

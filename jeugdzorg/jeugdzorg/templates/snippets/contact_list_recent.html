@@ -18,13 +18,13 @@
         {% if ordening == 'aflopend' %}
             {% for profiel in profiel_list|dictsort:"id" reversed %}
                 <li>
-                    {% include 'snippets/contact.html' with item=profiel %}
+                    {{ profiel.profile_rendered|safe }}
                 </li>
             {% endfor %}
         {% else %}
             {% for profiel in profiel_list|dictsort:"id" %}
                 <li>
-                    {% include 'snippets/contact.html' with item=profiel %}
+                    {{ profiel.profile_rendered|safe }}
                 </li>
             {% endfor %}
         {% endif %}

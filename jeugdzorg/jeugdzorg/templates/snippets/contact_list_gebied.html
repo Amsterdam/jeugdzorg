@@ -30,7 +30,7 @@
                     <h2 class="shortcut" id="gebied-{{ gebied.id }}">{{ gebied.naam }}</h2>
                     <ul class="contacten cards">
                         {% for profiel in gebied.profielen_zichtbaar %}
-                            <li>{% include 'snippets/contact.html' with item=profiel %}</li>
+                            <li>{{ profiel.profile_rendered|safe }}</li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -43,7 +43,7 @@
                 {% for profiel in profiel_list %}
                     {% if not profiel.gebied_lijst.all %}
                         <li>
-                            {% include 'snippets/contact.html' with item=profiel %}
+                            {{ profiel.profile_rendered|safe }}
                         </li>
                     {% endif %}
                 {% endfor %}

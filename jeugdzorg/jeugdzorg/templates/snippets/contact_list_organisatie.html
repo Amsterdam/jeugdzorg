@@ -33,7 +33,7 @@
                         <h2 class="shortcut" id="organisatie-{{ organisatie.id }}">{{ organisatie.naam }}</h2>
                         <ul class="contacten cards">
                             {% for contact in organisatie.profielen_zichtbaar reversed %}
-                                <li>{% include 'snippets/contact.html' with item=contact  %}</li>
+                                <li>{{ contact.profile_rendered|safe }}</li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -46,7 +46,7 @@
                 <ul class="contacten cards">
                     {% for contact in profiel_list reversed %}
                         {% if not contact.organisatie_lijst.all %}
-                            <li>{% include 'snippets/contact.html' with item=contact %}</li>
+                            <li>{{ contact.profile_rendered|safe }}</li>
                         {% endif %}
                     {% endfor %}
                 </ul>
@@ -86,7 +86,7 @@
                         <h2 class="shortcut" id="organisatie-{{ organisatie.id }}">{{ organisatie.naam }}</h2>
                         <ul class="contacten cards">
                             {% for contact in organisatie.profielen_zichtbaar %}
-                                <li>{% include 'snippets/contact.html' with item=contact  %}</li>
+                                <li>{{ contact.profile_rendered|safe }}</li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -99,7 +99,7 @@
                 <ul class="contacten cards">
                     {% for contact in profiel_list %}
                         {% if not contact.organisatie_lijst.all %}
-                            <li>{% include 'snippets/contact.html' with item=contact %}</li>
+                            <li>{{ contact.profile_rendered|safe }}</li>
                         {% endif %}
                     {% endfor %}
                 </ul>

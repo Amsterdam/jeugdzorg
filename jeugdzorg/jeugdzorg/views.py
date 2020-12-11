@@ -23,6 +23,9 @@ from .auth import auth_test
 from .forms import *
 from django.template import engines
 from django.urls import reverse_lazy
+import logging
+
+LOGGER = logging.getLogger(__name__)
 
 current_milli_time = lambda: int(round(time.time() * 1000))
 
@@ -382,11 +385,12 @@ class UserActivationView(TemplateView):
                 seconden_niet_gebruikt=(60 * 60 * 24 * 30 * 12),
                 zichtbaar=True,
             )
+            profiel.profile_rendered = profiel.render()
             profiel.save()
             viewer_group = auth_models.Group.objects.filter(name='viewer')
             if viewer_group:
                 user.groups.add(viewer_group[0])
-            # login(request, user)
+
             messages.add_message(self.request, messages.INFO, "Je account is aangemaakt.")
             return redirect(reverse_lazy('login'))
         return super().get(request, *args, **kwargs)
@@ -468,6 +472,10 @@ class ProfielUpdateView(UserPassesTestMixin, UpdateView):
             if profiel.is_valid():
                 profiel.instance = self.object
                 profiel.save()
+                profile_card = self.object.profiel.render()
+                if profile_card != self.object.profiel.profile_rendered:
+                    self.object.profiel.profile_rendered = profile_card
+                    self.object.profiel.save()
                 messages.add_message(self.request, messages.INFO, "Je profiel is aangepast.")
                 return super().form_valid(form)
             else:

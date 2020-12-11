@@ -1,5 +1,4 @@
-from jeugdzorg.models import CronjobState
-from jeugdzorg.utils import *
+
 import time
 from django.utils import timezone
 
@@ -17,6 +16,7 @@ def get_cronjob_worker_cache_key():
 
 
 def cronjob_container_check(name):
+    from jeugdzorg.models import CronjobState
     now = timezone.now()
     now_str = now.strftime('%Y-%m-%d %H:%M')
     container_int = (float(get_container_int()) / 1000)
@@ -34,3 +34,9 @@ def cronjob_container_check(name):
             cronjob[0].save()
     print('%s - %s: DOING' % (name, now_str))
     return True
+
+
+def update_profiel_cards(profielen_list):
+    for profiel in profielen_list:
+        profiel.profile_rendered = profiel.render()
+        profiel.save()

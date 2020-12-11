@@ -3,7 +3,7 @@ from adminsortable.models import SortableMixin
 from adminsortable.fields import SortableForeignKey
 from django.db.models import ManyToManyField
 from django.db.models.fields.files import ImageField
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_delete
 from taggit.managers import TaggableManager
 from taggit.models import TagBase, GenericTaggedItemBase
 from sortedm2m.fields import SortedManyToManyField
@@ -20,6 +20,11 @@ from itertools import groupby
 from django.contrib.sites.models import Site
 from django.core.management import call_command
 import json
+import logging
+from django.template.loader import render_to_string
+from .utils import update_profiel_cards
+
+LOGGER = logging.getLogger(__name__)
 
 
 class PrintableModel(models.Model):
@@ -63,6 +68,13 @@ class PrintableModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class InstanceDelete:
+    def delete(self):
+        profielen = [p for p in self.profiel_set.all()]
+        super().delete()
+        update_profiel_cards(profielen)
 
 
 class UserManager(BaseUserManager):
@@ -141,7 +153,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name_plural = _("Gebruikers")
 
 
-class Regeling(PrintableModel, models.Model):
+class Regeling(InstanceDelete, PrintableModel, models.Model):
     titel = models.CharField(
         verbose_name=('titel'),
         max_length=255,
@@ -302,7 +314,7 @@ class TaggedRegeling(GenericTaggedItemBase):
     )
 
 
-class Thema(PrintableModel, Sortable):
+class Thema(InstanceDelete, PrintableModel, Sortable):
     titel = models.CharField(
         verbose_name=_('Titel'),
         max_length=255,
@@ -341,7 +353,7 @@ class Thema(PrintableModel, Sortable):
         verbose_name_plural = _("Thema's")
 
 
-class Organisatie(models.Model):
+class Organisatie(InstanceDelete, models.Model):
     naam = models.CharField(
         verbose_name=_('Naam'),
         max_length=255,
@@ -581,6 +593,12 @@ class Profiel(PrintableModel, models.Model):
         verbose_name=_('Gebieden'),
         blank=True,
     )
+    profile_rendered = models.TextField(
+        verbose_name=_('Profiel gerenderd'),
+        null=True,
+        blank=True,
+    )
+
     objects = models.Manager()
     is_zichtbaar = ProfielIsZichtbaarManager()
     search = ProfielIsZichtbaarManager()
@@ -601,6 +619,14 @@ class Profiel(PrintableModel, models.Model):
         'regeling_lijst',
         'gebied_lijst',
     ]
+
+    def render(self):
+        context = {
+            'item': self,
+            'by_object': True,
+        }
+        rendered = render_to_string('snippets/contact.html', context=context)
+        return rendered
 
     @property
     def naam_volledig(self):
@@ -662,7 +688,7 @@ class Stadsdeel(models.Model):
         ordering = ('naam', )
 
 
-class Gebied(models.Model):
+class Gebied(InstanceDelete, models.Model):
     naam = models.CharField(
         verbose_name=_('Naam'),
         max_length=100,

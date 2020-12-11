@@ -22,6 +22,8 @@ python manage.py migrate
 
 python manage.py createcachetable
 
+python manage.py render_profile_cards
+
 python manage.py set_cronjob_worker
 
 python manage.py createsuperuser_pw  --username ${ADMIN_USERNAME} --password ${ADMIN_PASSWORD} --noinput --email 'admin@host.com'
