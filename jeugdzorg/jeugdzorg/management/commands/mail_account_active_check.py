@@ -4,8 +4,8 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.contrib.sites.models import Site
 from django.conf import settings
-from sendgrid.helpers.mail import *
 import sendgrid
+from sendgrid.helpers.mail import Mail
 from jeugdzorg.statics import *
 from jeugdzorg.utils import *
 from jeugdzorg.context_processors import app_settings
@@ -35,14 +35,13 @@ class Command(BaseCommand):
     name = 'mail_account_active_check'
 
     def handle(self, *args, **options):
+        sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
         now = datetime.datetime.now(tzlocal())
         if get_container_id() != cache.get(get_cronjob_worker_cache_key()):
             raise CommandError("You're not the worker!")
         print('%s: %s' % (now.strftime('%Y-%m-%d %H:%M'), self.__module__.split('.')[-1]))
         site = Site.objects.get_current()
         if site.instelling:
-            sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
-
             subject = 'VraagMij - Is je profiel up-to-date?'
 
             for u in get_users():
@@ -57,16 +56,21 @@ class Command(BaseCommand):
                     body_html = render_to_string('email/mail_account_active_check.html', o)
 
                     mail = Mail(
-                        Email('noreply@%s' % site.domain),
-                        subject,
-                        Email(u.email),
-                        Content("text/plain", body)
+                        from_email=('noreply@%s' % site.domain, 'VraagMij'),
+                        to_emails=(u.email, u.profiel.naam_volledig),
+                        subject=subject,
+                        plain_text_content=body,
+                        html_content=body_html,
                     )
-                    mail.add_content(Content("text/html", body_html))
 
                     if settings.ENV != 'develop':
-                        sg.client.mail.send.post(request_body=mail.get())
-                        print('Send mail to: %s' % u.email)
+                        try:
+                            response = sg.send(mail)
+                            print(response.status_code)
+                            print(response.body)
+                            print(response.headers)
+                        except Exception as e:
+                            print(e.message)
                     else:
                         print(body)
 
