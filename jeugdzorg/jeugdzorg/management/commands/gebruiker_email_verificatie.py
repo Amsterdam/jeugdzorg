@@ -37,7 +37,7 @@ class Command(BaseCommand):
 
         start_time = 1514764800
         end_time = int(now.timestamp())
-        sg = sendgrid.SendGridAPIClient(apikey=settings.SENDGRID_API_KEY)
+        sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
         bounces_base_url = 'suppression/bounces'
         blocks_base_url = 'suppression/blocks'
         invalid_emails_base_url = 'suppression/invalid_emails'

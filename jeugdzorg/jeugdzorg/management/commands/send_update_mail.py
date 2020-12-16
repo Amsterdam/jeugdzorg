@@ -60,7 +60,7 @@ class Command(BaseCommand):
         print('%s: %s' % (now.strftime('%Y-%m-%d %H:%M'), self.__module__.split('.')[-1]))
         site = Site.objects.get_current()
         if site.instelling:
-            sg = sendgrid.SendGridAPIClient(apikey=settings.SENDGRID_API_KEY)
+            sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
             now = now + dateutil.relativedelta.relativedelta(months=-1)
             regeling_nieuw = Regeling.objects.filter(**{
                 'datum_gecreeerd__gt': now

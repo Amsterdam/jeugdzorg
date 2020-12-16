@@ -123,7 +123,7 @@ class MailAPIPasswordResetForm(PasswordResetForm):
             subject = loader.render_to_string(subject_template_name, context)
             subject = "".join(subject.splitlines())
 
-            sg = sendgrid.SendGridAPIClient(apikey=settings.SENDGRID_API_KEY)
+            sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
 
             mail = Mail(Email('noreply@%s' % site.domain), subject, Email(to_email), Content("text/plain", body))
 
