@@ -350,7 +350,7 @@ class UserCreationView(CreateView):
             'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
             'token': account_activation_token.make_token(user),
         }
-        sg = sendgrid.SendGridAPIClient(apikey=settings.SENDGRID_API_KEY)
+        sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
         body = render_to_string('registration/user_registration_activation_email.txt', data)
         if settings.ENV == 'develop':
             print(body)
@@ -537,7 +537,7 @@ class GebruikerUitnodigenView(UserPassesTestMixin, FormView):
     def form_valid(self, form):
         site = Site.objects.get_current()
 
-        sg = sendgrid.SendGridAPIClient(apikey=settings.SENDGRID_API_KEY)
+        sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
         data = {
             'naam': self.request.user.profiel.naam_volledig
         }

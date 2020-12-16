@@ -41,7 +41,7 @@ class Command(BaseCommand):
         print('%s: %s' % (now.strftime('%Y-%m-%d %H:%M'), self.__module__.split('.')[-1]))
         site = Site.objects.get_current()
         if site.instelling:
-            sg = sendgrid.SendGridAPIClient(apikey=settings.SENDGRID_API_KEY)
+            sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
 
             subject = 'VraagMij - Is je profiel up-to-date?'
 
