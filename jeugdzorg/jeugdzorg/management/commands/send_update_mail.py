@@ -6,9 +6,9 @@ from django.template import engines
 from django.utils import timezone
 import dateutil.relativedelta
 from django.urls import reverse
-from sendgrid.helpers.mail import *
-from django.conf import settings
 import sendgrid
+from sendgrid.helpers.mail import Mail, MailSettings
+from django.conf import settings
 from jeugdzorg.context_processors import app_settings
 import sys, os
 import base64
@@ -104,23 +104,24 @@ class Command(BaseCommand):
                     body = template.render(o)
 
                     mail_settings = MailSettings()
+
                     mail = Mail(
-                        Email('noreply@%s' % site.domain),
-                        subject,
-                        Email(u.email),
-                        Content("text/plain", body)
+                        from_email=('noreply@%s' % site.domain, 'VraagMij'),
+                        to_emails=(u.email, u.profiel.naam_volledig),
+                        subject=subject,
+                        plain_text_content=body,
+                        html_content=body_html,
                     )
                     mail.mail_settings = mail_settings
-                    mail.add_content(Content("text/html", body_html))
-                    #
-                    # mail.add_attachment(build_logo())
-                    # h1 = Header('Content-Id', '<gfgrtdtrdk9769875786thgjhbj>')
-                    # mail.add_header(h1)
-
 
                     if settings.ENV != 'develop':
-                        sg.client.mail.send.post(request_body=mail.get())
-                        # print('Send mail to: %s' % u.email)
+                        try:
+                            response = sg.send(mail)
+                            print(response.status_code)
+                            print(response.body)
+                            print(response.headers)
+                        except Exception as e:
+                            print(e.message)
                     else:
                         print(body_html)
 

@@ -4,8 +4,8 @@ from django.contrib.auth.forms import UserCreationForm as DefaultUserCreationFor
 from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm
 from django.forms.models import BaseInlineFormSet
 import sendgrid
+from sendgrid.helpers.mail import Mail
 from django.db import connection
-from sendgrid.helpers.mail import *
 from django.template import loader
 from itertools import chain
 from .widgets import *
@@ -110,24 +110,35 @@ class MailAPIPasswordResetForm(PasswordResetForm):
     def send_mail(self, subject_template_name, email_template_name,
                   context, from_email, to_email, html_email_template_name=None):
         body = loader.render_to_string(email_template_name, context)
+        user = User.objects.get(email=to_email)
         print(body)
 
         if settings.ENV != 'develop':
             site = Site.objects.get_current()
             try:
                 context.update({
-                    'profiel': User.objects.get(email=to_email).profiel
+                    'profiel': user.profiel
                 })
             except:
                 pass
             subject = loader.render_to_string(subject_template_name, context)
             subject = "".join(subject.splitlines())
 
-            sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
+            mail = Mail(
+                from_email=('noreply@%s' % site.domain, 'VraagMij'),
+                to_emails=(to_email, user.profiel.naam_volledig),
+                subject=subject,
+                plain_text_content=body,
+            )
 
-            mail = Mail(Email('noreply@%s' % site.domain), subject, Email(to_email), Content("text/plain", body))
-
-            sg.client.mail.send.post(request_body=mail.get())
+            try:
+                sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
+                response = sg.send(mail)
+                print(response.status_code)
+                print(response.body)
+                print(response.headers)
+            except Exception as e:
+                print(e.message)
 
 
 class RegelingModelForm(forms.ModelForm):

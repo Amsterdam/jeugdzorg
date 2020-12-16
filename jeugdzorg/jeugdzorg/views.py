@@ -23,6 +23,8 @@ from .auth import auth_test
 from .forms import *
 from django.template import engines
 from django.urls import reverse_lazy
+import sendgrid
+from sendgrid.helpers.mail import Mail
 
 current_milli_time = lambda: int(round(time.time() * 1000))
 
@@ -350,14 +352,25 @@ class UserCreationView(CreateView):
             'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
             'token': account_activation_token.make_token(user),
         }
-        sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
         body = render_to_string('registration/user_registration_activation_email.txt', data)
         if settings.ENV == 'develop':
             print(body)
         to_email = form.cleaned_data.get('email')
         subject = 'VraagMij account activatie.'
-        email = Mail(Email('noreply@%s' % current_site.domain), subject, Email(to_email), Content("text/plain", body))
-        sg.client.mail.send.post(request_body=email.get())
+
+        mail = Mail(
+            from_email=('noreply@%s' % current_site.domain, 'VraagMij'),
+            to_emails=(to_email, user.profiel.naam_volledig),
+            subject=subject,
+            plain_text_content=body,
+        )
+
+        try:
+            sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
+            response = sg.send(mail)
+        except Exception as e:
+            print(e.message)
+
         return super().form_valid(form)
 
 
@@ -537,7 +550,6 @@ class GebruikerUitnodigenView(UserPassesTestMixin, FormView):
     def form_valid(self, form):
         site = Site.objects.get_current()
 
-        sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
         data = {
             'naam': self.request.user.profiel.naam_volledig
         }
@@ -548,14 +560,22 @@ class GebruikerUitnodigenView(UserPassesTestMixin, FormView):
         subject = 'VraagMij uitnodiging'
 
         mail = Mail(
-            Email('noreply@%s' % site.domain),
-            subject,
-            Email(form.cleaned_data.get('email')),
-            Content("text/plain", body)
+            from_email=('noreply@%s' % site.domain, 'VraagMij'),
+            to_emails=(form.cleaned_data.get('email'), self.request.user.profiel.naam_volledig),
+            subject=subject,
+            plain_text_content=body,
+            html_content=body_html,
         )
-        mail.add_content(Content("text/html", body_html))
+
         if settings.ENV != 'develop':
-            sg.client.mail.send.post(request_body=mail.get())
+            try:
+                sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
+                response = sg.send(mail)
+                print(response.status_code)
+                print(response.body)
+                print(response.headers)
+            except Exception as e:
+                print(e.message)
         else:
             print(body)
         return super().form_valid(form)
